@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  discordId String   @unique
+  email     String?  @unique
+  role      String   @default("USER") // ADMIN or USER
+  bots      Bot[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bot {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  zipPath     String
+  runtime     String?  // "node" or "python"
+  containerId String?  // Docker container ID
+  status      String   @default("QUEUED") // QUEUED, RUNNING, STOPPED, ERROR
+  envVars     EnvVar[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EnvVar {
+  id             String @id @default(uuid())
+  botId          String
+  bot            Bot    @relation(fields: [botId], references: [id])
+  key            String
+  encryptedValue String
+}
+
+model Setting {
+  key   String @id
+  value String
+}

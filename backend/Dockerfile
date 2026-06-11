@@ -7,7 +7,7 @@ RUN apk add --no-cache openssl libc6-compat
 
 # Install all dependencies (including dev for typescript build)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Build stage - compile TypeScript to JavaScript
 FROM deps AS builder
@@ -30,14 +30,15 @@ WORKDIR /app
 # Install system dependencies required by Prisma at runtime
 RUN apk add --no-cache openssl libc6-compat
 
-# Only install production dependencies
+# Copy package files and full node_modules from builder, then prune dev deps
 COPY package*.json ./
-RUN npm install --omit=dev
+COPY --from=builder /app/node_modules ./node_modules
+RUN npm prune --omit=dev
 
 # Copy compiled JS from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy prisma files needed at runtime
+# Copy prisma schema and generated client
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma

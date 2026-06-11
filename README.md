@@ -50,7 +50,7 @@ The easiest way to host this application is using **Docker Compose** or via a co
 6. Add your environment variables (see *Environment Variables* below).
 7. Click **Deploy the stack**. 
 
-### Method 2: Manual Docker Compose
+### Method 2: Manual Docker Compose (CLI)
 1. Clone this repository to your server:
    ```bash
    git clone https://github.com/Virtual-Media-Group/DiscordBot_WebPanel.git
@@ -65,6 +65,15 @@ The easiest way to host this application is using **Docker Compose** or via a co
    docker-compose up -d --build
    ```
 4. Access the panel in your browser (default: `http://localhost:3000`).
+
+### Method 3: Using Docker Desktop (GUI)
+1. Open Docker Desktop and ensure the Docker engine is running.
+2. Clone this repository to your computer using Git or download it as a ZIP file and extract it.
+3. Open a terminal or command prompt in the extracted `DiscordBot_WebPanel` folder.
+4. Copy the `.env.example` file in the `backend` folder to a new file named `.env` and fill in your Discord details.
+5. In the terminal, type `docker compose up -d --build` to start the application. 
+6. Open the **Docker Desktop Dashboard**. You will see a new group of containers running for the Discord Web Panel.
+7. Click the port link (`:3000`) next to the frontend container in Docker Desktop to open the panel in your browser.
 
 ---
 

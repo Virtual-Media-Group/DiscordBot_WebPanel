@@ -1,4 +1,4 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
@@ -18,13 +18,13 @@ COPY . .
 
 # Generate Prisma client (dummy DATABASE_URL needed at generate time for Prisma 7)
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Compile TypeScript
 RUN npm run build
 
 # Production image - only copy compiled output
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

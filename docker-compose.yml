@@ -8,11 +8,48 @@ services:
       POSTGRES_DB: discord_bots
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports: ["5432:5432"]
+    # Removed ports: ["5432:5432"] to fix Docker Swarm ingress errors and improve security
+    restart: always
 
   redis:
     image: redis:7-alpine
-    ports: ["6379:6379"]
+    # Removed ports: ["6379:6379"] to fix Docker Swarm ingress errors and improve security
+    restart: always
+
+  backend:
+    build: ./backend
+    environment:
+      - DATABASE_URL=postgresql://admin:secret@postgres:5432/discord_bots
+      - REDIS_HOST=redis
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-in-prod}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_CALLBACK_URL=${DISCORD_CALLBACK_URL:-http://localhost:4000/api/auth/discord/callback}
+      - SUPERADMIN_DISCORD_ID=${SUPERADMIN_DISCORD_ID}
+      - GITHUB_REPO_URL=${GITHUB_REPO_URL}
+    ports:
+      - target: 4000
+        published: 4000
+        protocol: tcp
+        mode: host
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+
+  frontend:
+    build: ./frontend
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
+    ports:
+      - target: 3000
+        published: 3000
+        protocol: tcp
+        mode: host
+    depends_on:
+      - backend
+    restart: always
 
 volumes:
   pgdata:

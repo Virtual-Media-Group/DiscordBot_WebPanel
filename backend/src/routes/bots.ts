@@ -1,11 +1,15 @@
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
 import { Queue } from 'bullmq';
 import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
-import unzipper from 'unzipper';
+import * as unzipper from 'unzipper';
+
+interface AuthRequest extends Request {
+  userId?: string;
+}
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -21,11 +25,11 @@ const botQueue = new Queue('bot-deploy', {
 // Middleware to mock auth for MVP. In production, check JWT.
 const requireAuth = async (req: any, res: any, next: any) => {
   // For MVP, we pass userId in headers or use a hardcoded one if testing
-  req.userId = req.headers['x-user-id'] || 'test-user-id';
+  (req as AuthRequest).userId = req.headers['x-user-id'] || 'test-user-id';
   next();
 };
 
-router.post('/upload', requireAuth, upload.single('botZip'), async (req, res) => {
+router.post('/upload', requireAuth, upload.single('botZip'), async (req: any, res: any) => {
   if (!req.file) {
     return res.status(400).send('No zip file uploaded');
   }
@@ -66,7 +70,7 @@ router.post('/upload', requireAuth, upload.single('botZip'), async (req, res) =>
   }
 });
 
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', requireAuth, async (req: any, res: any) => {
   const bots = await prisma.bot.findMany({
     where: { userId: req.userId }
   });

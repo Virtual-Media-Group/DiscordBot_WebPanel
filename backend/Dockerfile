@@ -1,23 +1,47 @@
-FROM node:20-alpine
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
-# Install dependencies required by Prisma
+# Install system dependencies required by Prisma
 RUN apk add --no-cache openssl libc6-compat
 
-# Install dependencies
+# Install all dependencies (including dev for typescript build)
 COPY package*.json ./
 RUN npm install
 
-# Copy application files
+# Build stage - compile TypeScript to JavaScript
+FROM deps AS builder
+
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build typescript (if needed) or just run
-RUN npm run build || echo "No build script"
+# Compile TypeScript
+RUN npm run build
+
+# Production image - only copy compiled output
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Install system dependencies required by Prisma at runtime
+RUN apk add --no-cache openssl libc6-compat
+
+# Only install production dependencies
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Copy compiled JS from builder
+COPY --from=builder /app/dist ./dist
+
+# Copy prisma files needed at runtime
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY prisma ./prisma
 
 EXPOSE 4000
 
-CMD ["npx", "ts-node", "src/index.ts"]
+CMD ["node", "dist/index.js"]

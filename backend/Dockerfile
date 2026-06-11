@@ -7,7 +7,7 @@ RUN apk add --no-cache openssl libc6-compat
 
 # Install all dependencies (including dev for typescript build)
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Build stage - compile TypeScript to JavaScript
 FROM deps AS builder
